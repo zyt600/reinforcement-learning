@@ -26,7 +26,7 @@ def run_game(env, policy, render=False, output=False):
     """在env用policy跑一次，返回游戏胜利还是失败"""
     env.reset()
     state_now = 0
-    for t in range(100):
+    for t in range(10000):
         if render:
             env.render()  # 渲染画面
         a = np.argmax(policy[state_now])  # 0:LEFT 1:DOWN 2:RIGHT 3:UP
@@ -149,6 +149,19 @@ def policy_iteration(env, policy_eval_fn=policy_evaluation, gamma=1.0):
             return policy, V
 
 
+def front(s):
+    front_list = []
+    if s <= 11:
+        front_list.append(s + 4)
+    if s >= 4:
+        front_list.append(s - 4)
+    if s % 4 != 0:
+        front_list.append(s - 1)
+    if s % 4 != 3:
+        front_list.append(s + 1)
+    return front_list
+
+
 def priority_sweeping_evaluation(policy, env, gamma=1.0, theta=0.00001):
     """通过优先队列加速evaluate，输入policy返回估值"""
     nS = env.observation_space.n
@@ -157,7 +170,7 @@ def priority_sweeping_evaluation(policy, env, gamma=1.0, theta=0.00001):
     # 初始化价值函数
     # V = np.random.rand(nS)
     V = np.zeros(nS)
-
+    delta_np = np.zeros(nS)
 
     priority_queue = []  # 根据两次变化差优先级队列，先更新前后两次差大的元素
     for s in range(nS):
@@ -167,19 +180,24 @@ def priority_sweeping_evaluation(policy, env, gamma=1.0, theta=0.00001):
                 v_new += policy[s][a] * prob * (reward + gamma * V[next_state])
 
         delta = np.abs(V[s] - v_new)
+        delta_np[s] += delta
         V[s] = v_new
-        heapq.heappush(priority_queue, (-delta, s))
 
-    while priority_queue:
-        _, s = heapq.heappop(priority_queue)
+    while True:
+        s = np.argmax(delta_np)
+        if delta_np[s] < theta:
+            break
+        delta_np[s] = 0
         v_new = 0
         for a in range(nA):
             for prob, next_state, reward, done in env.P[s][a]:
                 v_new += policy[s][a] * prob * (reward + gamma * V[next_state])
         delta = np.abs(V[s] - v_new)
         V[s] = v_new
-        if delta > theta:
-            heapq.heappush(priority_queue, (-delta, s))
+        front_list = front(s)
+        for ele in front_list:
+            delta_np[ele] += delta
+
     return np.array(V)
 
 
@@ -204,7 +222,7 @@ def eval_model(env, policy, value):
     print("用迭代后的policy玩一次游戏")
     # run_game(env, policy, True)
     run_game(env, policy, False)
-    print("胜率", eval_win_rate(env, policyPI, it=100))
+    print("胜率", eval_win_rate(env, policyPI, it=5000))
 
 
 env.reset()
@@ -313,39 +331,37 @@ def priority_value_iteration(env, theta=0.0001, gamma=1.0):
         return A
 
     V = np.zeros(nS)
+    delta_np = np.zeros(nS)
 
-    priority_queue = []  # 根据两次变化差优先级队列，先更新前后两次差大的元素
     for s in range(nS):
         max_v_new = 0
         for a in range(nA):
             v_new = 0
             for prob, next_state, reward, done in env.P[s][a]:
                 v_new += prob * (reward + gamma * V[next_state])
-            if max_v_new < v_new:
-                max_v_new = v_new
+            max_v_new = max(max_v_new, v_new)
         delta = np.abs(V[s] - max_v_new)
+        delta_np[s] += delta
         V[s] = max_v_new
-        heapq.heappush(priority_queue, (-delta, s))
 
-    num_iterations = 1
-    while priority_queue:
+    num_iterations = 0
+    while True:
         num_iterations += 1
-        _, s = heapq.heappop(priority_queue)
-        max_v_new = 0
-        for a in range(nA):
-            v_new = 0
-            for prob, next_state, reward, done in env.P[s][a]:
-                v_new += prob * (reward + gamma * V[next_state])
-            if max_v_new < v_new:
-                max_v_new = v_new
-        delta = np.abs(V[s] - max_v_new)
-        V[s] = max_v_new
-        if delta > theta:
-            heapq.heappush(priority_queue, (-delta, s))
+        s = np.argmax(delta_np)
+        if delta_np[s] < theta:
+            break
+        delta_np[s] = 0
+        q_values = one_step_lookahead(s, V)
+        new_value = np.max(q_values)
+        delta = np.abs(new_value - V[s])
+        V[s] = new_value
+        front_list = front(s)
+        for ele in front_list:
+            delta_np[ele] += delta
+
     policy = np.zeros([nS, nA])
     for s in range(nS):
         q_values = one_step_lookahead(s, V)
-
         new_action = np.argmax(q_values)
         policy[s][new_action] = 1
 
@@ -368,15 +384,12 @@ print()
 nS = env.observation_space.n
 nA = env.action_space.n
 
-samePolicy = True
-# for s in range(nS):
-#     for a in range(nA):
-#         if not (policyPI[s][a] == policyPriority[s][a] == policyVI[s][a] == priority_policyVI[s][a]):
-#             print("state", s, "action", a)
-#             samePolicy = False
-#             break
-samePolicy= (policyPI==policyPriority).all()
-if samePolicy:
+samePolicy = (policyPI == policyPriority).all()
+samePolicy2 = (priority_policyVI == policyVI).all()
+samePolicy3 = (policyPI == policyVI).all()
+print(samePolicy, samePolicy2, samePolicy3)
+
+if samePolicy and samePolicy2 and samePolicy3:
     print("策略迭代算法与价值迭代算法及优先级动态规划的最终策略一致。")
 else:
     print("不一致。")
