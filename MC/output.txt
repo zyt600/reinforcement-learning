@@ -59,3 +59,39 @@ average_result 0.7266999999999999
 average_time 97.93379756212235
 average_iteration 18.5
 
+2023-11-02 04:24:14
+optimized version3
+average_result 0.7126499999999999
+average_time 101.6388848900795
+average_iteration 18.5
+
+2023-11-02 04:32:33
+change epsilon1
+average_result 0.388
+average_time 189.91533299684525
+average_iteration 52.45
+
+2023-11-02 04:38:46
+change epsilon2
+average_result 0.695
+average_time 128.6375012278557
+average_iteration 41.85
+
+2023-11-02 04:45:27
+change epsilon3
+average_result 0.41675000000000006
+average_time 166.50905002355574
+average_iteration 46.85
+
+2023-11-02 05:01:22
+optimized version4
+average_result 0.73315
+average_time 122.91454548835755
+average_iteration 16.85
+
+2023-11-02 05:06:07
+optimized version5
+average_result 0.72315
+average_time 120.01960880756378
+average_iteration 29.0
+
