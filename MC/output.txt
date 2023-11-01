@@ -1,0 +1,61 @@
+2023-11-02 03:18:02 : initial version
+average_result 0.719
+average_time 63.72800087928772
+average_iteration 34.0
+
+2023-11-02 03:38:33 : initial version
+average_result 0.745
+average_time 44.24586224555969
+average_iteration 27.0
+
+2023-11-02 03:40:55 : optimized version1
+average_result 0.692
+average_time 139.94405961036682
+average_iteration 69.0
+
+2023-11-02 03:42:59 : optimized version2
+average_result 0.74
+average_time 121.87801122665405
+average_iteration 36.0
+
+2023-11-02 03:46:24 : optimized version3
+average_result 0.732
+average_time 202.5530183315277
+average_iteration 55.0
+
+2023-11-02 03:53:07
+change epsilon1
+average_result 0.604
+average_time 84.11800718307495
+average_iteration 43.0
+
+2023-11-02 03:53:55
+change epsilon2
+average_result 0.719
+average_time 45.508596897125244
+average_iteration 37.0
+
+2023-11-02 03:54:43
+change epsilon3
+average_result 0.751
+average_time 45.213839292526245
+average_iteration 33.0
+
+2023-11-02 04:02:08
+initial version
+average_result 0.73305
+average_time 129.29849796295167
+average_iteration 41.8
+
+2023-11-02 04:14:24
+optimized version1
+average_result 0.64375
+average_time 154.5375681757927
+average_iteration 56.75
+
+2023-11-02 04:19:38
+optimized version2
+average_result 0.7266999999999999
+average_time 97.93379756212235
+average_iteration 18.5
+

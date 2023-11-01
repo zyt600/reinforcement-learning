@@ -1,8 +1,17 @@
+import sys
+import time
+import math
 import gym
-import numpy as np
 
-env = gym.make("FrozenLake-v1")  # 创建环境
-env.reset()
+gym.logger.set_level(40)
+import numpy as np
+import multiprocessing
+from functools import partial
+import datetime
+import warnings
+
+cpun = max(multiprocessing.cpu_count() - 1, 1)
+
 
 def compute_qpi_MC(pi, env, gamma, epsilon, num_episodes=1000):
     """
@@ -52,10 +61,29 @@ def compute_qpi_MC(pi, env, gamma, epsilon, num_episodes=1000):
 
     return Q
 
-# Qpi = compute_qpi_MC(np.ones(16), env, gamma=0.95)
-# print("Qpi:\n", Qpi)
 
-def policy_iteration_MC(env, gamma, eps0=0.5, decay=0.1, num_episodes=1000):
+def epsilon_function0(eps0, decay, iteration):
+    epsilon = eps0 / (1 + decay * iteration)
+    return epsilon
+
+
+def epsilon_function1(eps0, decay, iteration):
+    epsilon = eps0 / (1 + (decay * iteration) * (decay * iteration))
+    return epsilon
+
+
+def epsilon_function2(eps0, decay, iteration):
+    epsilon = eps0 / (1 + 0.1 * (decay * iteration) * (decay * iteration))
+    return epsilon
+
+
+def epsilon_function3(eps0, decay, iteration):
+    epsilon = eps0 / (1 + decay * math.exp(iteration * decay))
+    return epsilon
+
+
+def policy_iteration_MC(env, gamma, eps0=0.5, decay=0.1, num_episodes=1000, epsilon_function=epsilon_function0,
+                        log_inter=10):
     """
     使用蒙特卡洛方法来实现策略迭代。
     参数：
@@ -69,19 +97,27 @@ def policy_iteration_MC(env, gamma, eps0=0.5, decay=0.1, num_episodes=1000):
         pi -- 最终策略。
     """
 
+    start_time = time.time()
     pi = np.zeros(env.observation_space.n)
     iteration = 1
     while True:
-        epsilon = eps0/(1+decay*iteration)
-        Q = compute_qpi_MC(pi, env, gamma, epsilon, num_episodes)
+        epsilon = epsilon_function(eps0, decay, iteration)
+        Q = compute_qpi_MC(pi, env, gamma, epsilon, num_episodes)  # Q[state][action] -- 动作价值函数的估计值。
         new_pi = Q.argmax(axis=1)
-        if (pi != new_pi).sum() == 0: # 策略不再改变，作为收敛判定条件
-            return new_pi            
-        print(f"iteration: {iteration}, eps: {epsilon}, change actions: {(pi != new_pi).sum()}")
+        if (pi != new_pi).sum() == 0:  # 策略不再改变，作为收敛判定条件
+            print(f"iteration: {iteration}, eps: {epsilon}, change actions: {(pi != new_pi).sum()}")
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            print(f"It took \033[91m{elapsed_time :.4f}\033[0m s to run.")
+            return new_pi, elapsed_time, iteration
+        if iteration % log_inter == 0:
+            print(
+                f"iteration: {iteration}, eps: {epsilon:.3f}, change actions: {(pi != new_pi).sum()}, result: {cnt_result(env, new_pi)}")
         pi = new_pi
         iteration = iteration + 1
 
-def test_pi(env, pi, num_episodes=1000):
+
+def cnt_result(env, pi, num_episodes=1000):
     """
     测试策略。
     参数：
@@ -98,12 +134,99 @@ def test_pi(env, pi, num_episodes=1000):
         ob = env.reset()
         while True:
             a = pi[ob]
-            ob, rew, done, _ = env.step(a)
+            ob, reward, done, _ = env.step(a)
             if done:
-                count += 1 if rew == 1 else 0
+                count += 1 if reward == 1 else 0
                 break
     return count / num_episodes
 
-pi = policy_iteration_MC(env, gamma=0.99, num_episodes=5000)
-result = test_pi(env, pi)
-print(result)
+
+def worker(id, gamma, num_episodes, epsilon_function=epsilon_function0, log_inter=5):
+    print(f"worker {id} start")
+    env = gym.make("FrozenLake-v1")
+    env.reset()
+    policy, time_elapsed, iterations = policy_iteration_MC(env, gamma=gamma, num_episodes=num_episodes,
+                                                           epsilon_function=epsilon_function, log_inter=log_inter)
+    result = cnt_result(env, policy)
+    return result, time_elapsed, iterations
+
+
+def log(results, epoch, name):
+    """计算输出平均结果，并写日志"""
+    average_result = sum(result[0] for result in results) / epoch
+    average_time = sum(result[1] for result in results) / epoch
+    average_iteration = sum(result[2] for result in results) / epoch
+
+    print("average_result", average_result)
+    print("average_time", average_time)
+    print("average_iteration", average_iteration)
+    print()
+
+    with open('output.txt', 'a') as f:
+        original_stdout = sys.stdout
+        sys.stdout = f
+        now = datetime.datetime.now()
+
+        formatted_time = now.strftime("%Y-%m-%d %H:%M:%S")
+        print(formatted_time)
+        print(name)
+        print("average_result", average_result)
+        print("average_time", average_time)
+        print("average_iteration", average_iteration)
+        print()
+        sys.stdout = original_stdout
+
+
+def run_worker(gamma, num_episodes, epoch, which_version, name, epsilon_function=epsilon_function0):
+    """多进程运行各种参数的蒙特卡洛"""
+    if not hasattr(run_worker, "version"):
+        run_worker.version = 0
+    else:
+        run_worker.version += 1
+    if not which_version[run_worker.version]:
+        return
+    pool = multiprocessing.Pool(cpun)
+    partial_worker = partial(worker, gamma=gamma, num_episodes=num_episodes, epsilon_function=epsilon_function)
+    print(name, "is running")
+    print("gamma", gamma, "num_episodes", num_episodes, "epoch", epoch)
+    results = pool.map(partial_worker, range(epoch))
+    pool.close()
+    pool.join()
+    log(results, epoch, name)
+
+
+def main():
+    # 使用CPU核心的数量作为进程池的大小
+    print("cpun", cpun)
+
+    epoch = 20  # 想要执行的进程数
+    which_version = [True, True, True, True, True, True, True]
+    # which_version=[False,True,False,False,False,False,False]
+    version = 0
+    name = "initial version"
+    run_worker(gamma=0.99, num_episodes=5000, epoch=epoch, which_version=which_version, name=name)
+
+    name = "optimized version1"
+    run_worker(gamma=0.97, num_episodes=5000, epoch=epoch, which_version=which_version, name=name)
+
+    name = "optimized version2"
+    run_worker(gamma=0.99, num_episodes=10000, epoch=epoch, which_version=which_version, name=name)
+
+    name = "optimized version3"
+    run_worker(gamma=0.97, num_episodes=10000, epoch=epoch, which_version=which_version, name=name)
+
+    name = "change epsilon1"
+    run_worker(gamma=0.99, num_episodes=5000, epoch=epoch, which_version=which_version, name=name,
+               epsilon_function=epsilon_function1)
+
+    name = "change epsilon2"
+    run_worker(gamma=0.99, num_episodes=5000, epoch=epoch, which_version=which_version, name=name,
+               epsilon_function=epsilon_function2)
+
+    name = "change epsilon3"
+    run_worker(gamma=0.99, num_episodes=5000, epoch=epoch, which_version=which_version, name=name,
+               epsilon_function=epsilon_function3)
+
+
+if __name__ == "__main__":
+    main()
