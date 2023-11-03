@@ -1,0 +1,18 @@
+2023-11-02 05:54:56
+change epsilon1
+average_result 0.7263999999999998
+average_time 120.59565912485122
+average_iteration 7.05
+
+2023-11-02 06:01:34
+change epsilon2
+average_result 0.7283000000000001
+average_time 123.47744534015655
+average_iteration 9.25
+
+2023-11-02 06:06:01
+change epsilon3
+average_result 0.7219
+average_time 87.84534929990768
+average_iteration 7.45
+

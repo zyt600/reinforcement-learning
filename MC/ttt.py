@@ -82,6 +82,11 @@ def epsilon_function3(eps0, decay, iteration):
     return epsilon
 
 
+def epsilon_function3(eps0, decay, iteration):
+    epsilon = eps0 / (1 + decay * math.exp(iteration * decay*0.5))
+    return epsilon
+
+
 def policy_iteration_MC(env, gamma, eps0=0.5, decay=0.1, num_episodes=1000, epsilon_function=epsilon_function0,
                         log_inter=10):
     """
@@ -200,7 +205,7 @@ def main():
     print("cpun", cpun)
 
     epoch = 20  # 想要执行的进程数
-    which_version = [False, False, False, False, True, True, False, False, False]
+    which_version = [False, False, False, False, False, False, True, True, True, True]
     # which_version=[False,True,False,False,False,False,False]
     version = 0
     name = "initial version"
@@ -222,17 +227,20 @@ def main():
     run_worker(gamma=0.999, num_episodes=5000, epoch=epoch, which_version=which_version, name=name)
 
     name = "change epsilon1"
-    run_worker(gamma=0.99, num_episodes=5000, epoch=epoch, which_version=which_version, name=name,
+    run_worker(gamma=0.99, num_episodes=10000, epoch=epoch, which_version=which_version, name=name,
                epsilon_function=epsilon_function1)
 
     name = "change epsilon2"
-    run_worker(gamma=0.99, num_episodes=5000, epoch=epoch, which_version=which_version, name=name,
+    run_worker(gamma=0.99, num_episodes=10000, epoch=epoch, which_version=which_version, name=name,
                epsilon_function=epsilon_function2)
 
     name = "change epsilon3"
-    run_worker(gamma=0.99, num_episodes=5000, epoch=epoch, which_version=which_version, name=name,
+    run_worker(gamma=0.99, num_episodes=10000, epoch=epoch, which_version=which_version, name=name,
                epsilon_function=epsilon_function3)
 
+    # name = "change epsilon4"
+    # run_worker(gamma=0.99, num_episodes=10000, epoch=epoch, which_version=which_version, name=name,
+    #            epsilon_function=epsilon_function4)
 
 if __name__ == "__main__":
     main()

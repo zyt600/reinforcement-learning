@@ -95,3 +95,21 @@ average_result 0.72315
 average_time 120.01960880756378
 average_iteration 29.0
 
+2023-11-02 05:46:43
+change epsilon1
+average_result 0.6738999999999999
+average_time 128.4782212138176
+average_iteration 22.35
+
+2023-11-02 05:52:09
+change epsilon2
+average_result 0.70015
+average_time 94.10520054101944
+average_iteration 17.3
+
+2023-11-02 06:02:21
+change epsilon3
+average_result 0.7237499999999999
+average_time 123.87039189338684
+average_iteration 22.85
+
