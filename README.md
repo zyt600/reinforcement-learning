@@ -45,25 +45,25 @@ The policy iteration algorithm follows these general steps:
 2. Improve the policy using the state-value function to get a better policy.
 3. Repeat the evaluation and improvement steps until the policy converges to the optimal policy.
 
-## Value Iteration Algorithm Implementation
+### Value Iteration Algorithm Implementation
 
 Policy iteration can be computationally expensive, as it may require many iterations to converge to the state-value function for a given policy. This is particularly true in environments with large state and action spaces. One might ask, do we have to wait for the policy evaluation to complete before we can improve the policy? In some cases, even though the state-value function has not converged, the policy improvement step would yield the same policy regardless. This indicates that policy iteration can sometimes perform unnecessary calculations, presenting an opportunity for further optimization.
 
 In value iteration, there is no explicit policy; instead, we maintain a state-action value function and update it directly.
 
-## Main Optimization: Priority Sweeping Evaluation and Priority Value Iteration
+### Main Optimization: Priority Sweeping Evaluation and Priority Value Iteration
 
 In priority dynamic programming, states are assigned priorities, with higher-priority states having their state values updated first. Priorities are often determined using the Bellman error, which can accelerate convergence at the cost of maintaining a priority queue.
 
-### Initial Approach
+#### Initial Approach
 
 Initially, all states are zero-initialized. We calculate the value of all states using the Bellman expectation equation and place them in a priority queue, where the size of the value change determines the priority. States with larger changes are prioritized. This process repeats, removing the highest priority state from the queue, recalculating its value, and determining whether to keep it in the queue based on a threshold value `theta`. This continues until the queue is empty, and the final values are returned.
 
-### Encountered Issues
+#### Encountered Issues
 
 With zero-initialized values and rewards of zero at all states except the goal, the priority queue faces an issue where, except for the state adjacent to the goal, all deltas are zero. After updating the penultimate state, its delta is the largest, leading to it being selected again. However, since its neighbors are not updated, its delta becomes zero. Consequently, many states are prematurely popped from the queue, resulting in incorrect outcomes.
 
-### New Approach
+#### New Approach
 
 Instead of using a priority queue, we use a delta array to store the cumulative delta for each state. Whenever a state is updated, its delta is reset to zero. When a neighbor is updated, the cumulative delta is incremented. The state to be updated next is chosen based on `argmax` of the current deltas.
 
