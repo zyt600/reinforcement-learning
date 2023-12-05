@@ -4,6 +4,8 @@
 - [Monte Carlo](#rl-with-monte-carlomc-algorithm)
 - [Temporal Difference](#temporal-difference-td-learning)
 
+- [RL for Honor of Kings (a famous game called 王者荣耀 in chinese)](#rl-for-honor-of-kings)
+
 ## Environment Description
 
 In this project, we utilize the "Frozen Lake" environment from OpenAI's Gym, which is a grid world environment with a 4x4 size grid as shown in Figure 1-1. Each square on the grid represents a discrete state within the environment.
@@ -133,3 +135,33 @@ To ensure thorough exploration of the environment, an ε-greedy strategy is also
 | 0.5   | 0.74        |
 | 0.9   | 0.0         |
 | 0.99  | 0.0         |
+
+## RL for Honor of Kings
+
+### Gorge walk
+
+In this project, I trained an intelligent agent to navigate through the gorge. The primary objective is for the agent to learn effective movement strategies through continuous exploration of the map. The goal is to minimize collisions with obstacles, reach the destination from the starting point using as few frames as possible, and collect as many treasure chests as possible along the way.
+![Figure: gorge walk](resource/start.png)
+![Figure: gorge walk](resource/Wangzherongyao.png)
+![Figure: gorge walk](resource/end.png)
+video demo: 
+
+[https://drive.google.com/file/d/1ly7HRwo-SnMbbSq-f2ULFQtxCVlxyeOA/view?usp=sharing](https://drive.google.com/file/d/1ly7HRwo-SnMbbSq-f2ULFQtxCVlxyeOA/view?usp=sharing)
+
+or
+
+[]()
+
+#### Structure
+
+I used the DQN algorithm with a CNN network to extract features from the environment, and utilized epsilon greedy for exploration and learning. The train is on Tecent Kaiwu Framework.
+
+#### Result
+
+The agent can reach the destination from the starting point using 343 frames (the limitation is 6000), and collect 2 treasure chests along the way.
+
+### 1v1 game (on going)
+
+The project involves training a hero with different kinds of skills to navigate a map, aiming to gathering resources to enhance the hero's attack power. The primary objective is to be the first to destroy the opponent's crystal. If our crystal is destroyed, the opponent wins. The focus is on strategic accumulation of in-game economy and experience to gain a competitive edge.
+
+![Figure: gorge walk](resource/1v1.png)
